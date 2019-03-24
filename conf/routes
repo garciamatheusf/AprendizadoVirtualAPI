@@ -1,0 +1,27 @@
+# Account
+POST        /account/login/                 controllers.account.AccountController.login
+POST        /account/reset/                 controllers.account.AccountController.resetPassword
+# User
+GET         /user/                          controllers.user.UserController.listAll
+GET         /user/:email                    controllers.user.UserController.getUser(email: String)
+POST        /user/                          controllers.user.UserController.createUser
+PUT         /user/                          controllers.user.UserController.updateUser
+DELETE      /user/                          controllers.user.UserController.deleteUser
+# Lesson
+GET         /lesson/                        controllers.lesson.LessonController.listAll
+GET         /lesson/:id                     controllers.lesson.LessonController.getLesson(id: Integer)
+GET         /lesson/lastten/                controllers.lesson.LessonController.getLastTen
+POST        /lesson/                        controllers.lesson.LessonController.createLesson
+PUT         /lesson/                        controllers.lesson.LessonController.updateLesson
+DELETE      /lesson/                        controllers.lesson.LessonController.deleteLesson
+# Question
+GET         /question/                      controllers.question.QuestionController.listAll
+GET         /question/:id                   controllers.question.QuestionController.getQuestion(id: Integer)
+POST        /question/                      controllers.question.QuestionController.createQuestion
+PUT         /question/                      controllers.question.QuestionController.updateQuestion
+DELETE      /question/                      controllers.question.QuestionController.deleteQuestion
+# Recovery
+GET         /recovery/                      controllers.recovery.RecoveryController.listAll
+POST        /recovery/                      controllers.recovery.RecoveryController.createRecovery
+DELETE      /recovery/                      controllers.recovery.RecoveryController.deleteRecovery
+

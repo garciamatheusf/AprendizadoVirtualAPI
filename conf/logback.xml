@@ -1,0 +1,81 @@
+<configuration>
+
+    <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d - [%-5level] - [%marker \(%F:%L\)] : %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+
+    <appender name="ACCESS_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STASH_APP" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:4561</destination>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <message/>
+                <timestamp />
+                <logLevel/>
+                <stackTrace/>
+                <logstashMarkers/>
+                <pattern>
+                    <pattern>
+                        {
+                        "type" : "aprvir",
+                        "classline" : "%F:%L"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${application.home}/logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>access-log-%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>5</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d - [%-5level] - [%t \(%F:%L\)] : %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      The logger name is typically the Java/Scala package name.
+      This configures the log level to log at for a package and its children packages.
+    -->
+    <logger name="play" level="INFO" />
+    <logger name="application" level="DEBUG" />
+
+    <!--<logger name="httpclient.wire" level="DEBUG">-->
+    <!--<appender-ref ref="STDOUT" />-->
+    <!--</logger>-->
+
+    <!--<logger name="org.apache.commons.httpclient" level="DEBUG">-->
+    <!--<appender-ref ref="STDOUT" />-->
+    <!--</logger>-->
+
+    <logger name="access" level="INFO" additivity="false">
+        <!--<appender-ref ref="ACCESS_FILE" />-->
+        <appender-ref ref="ACCESS_STDOUT" />
+        <!--<appender-ref ref="STASH" />-->
+    </logger>
+
+    <logger name="app" level="DEBUG" additivity="false">
+        <!--<appender-ref ref="APP_FILE" />-->
+        <appender-ref ref="STDOUT" />
+        <!--<appender-ref ref="STASH_APP" />-->
+    </logger>
+
+    <root level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
