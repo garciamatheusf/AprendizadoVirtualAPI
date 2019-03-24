@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
   javaWs,
   filters,
   "org.hibernate" % "hibernate-entitymanager" % "5.0.5.Final",
+  "mysql" % "mysql-connector-java" % "5.1.18",
   "com.fasterxml.jackson.module" % "jackson-module-jaxb-annotations" % "2.7.3",
   "net.logstash.logback" % "logstash-logback-encoder" % "4.11"
 )
