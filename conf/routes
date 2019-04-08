@@ -3,7 +3,8 @@ POST        /account/login/                 controllers.account.AccountControlle
 POST        /account/reset/                 controllers.account.AccountController.resetPassword
 # User
 GET         /user/                          controllers.user.UserController.listAll
-GET         /user/:email                    controllers.user.UserController.getUser(email: String)
+GET         /user/email/:email              controllers.user.UserController.getUserByEmail(email: String)
+GET         /user/token/:token              controllers.user.UserController.getUserByToken(token: String)
 POST        /user/                          controllers.user.UserController.createUser
 PUT         /user/                          controllers.user.UserController.updateUser
 DELETE      /user/                          controllers.user.UserController.deleteUser

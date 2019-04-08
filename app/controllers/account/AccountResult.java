@@ -19,13 +19,19 @@ public class AccountResult extends DefaultResult {
         super(defaultStatusCodes);
     }
 
-    public static AccountResult sucess(){
+    public static AccountResult sucessLogin(String token){
         AccountResult issueNFeResult = new AccountResult(200, "Operacao realizada com sucesso");
+        issueNFeResult.objectNode.put("token", token);
         return issueNFeResult;
     }
 
-    public static AccountResult loginError() {
-        AccountResult issueNFeResult = new AccountResult(401, "Email ou senha inválido");
+    public static AccountResult accountNotFound() {
+        AccountResult issueNFeResult = new AccountResult(401, "Email nao cadastrado");
+        return issueNFeResult;
+    }
+
+    public static AccountResult wrongPassword() {
+        AccountResult issueNFeResult = new AccountResult(401, "Senha inválido");
         return issueNFeResult;
     }
 
@@ -36,6 +42,11 @@ public class AccountResult extends DefaultResult {
 
     public static AccountResult tempPasswordWrong() {
         AccountResult issueNFeResult = new AccountResult(403, "Senha temporaria invalida, verifique seu e-mail");
+        return issueNFeResult;
+    }
+
+    public static AccountResult sucessRequestReset() {
+        AccountResult issueNFeResult = new AccountResult(200, "Reset solicitado com sucesso");
         return issueNFeResult;
     }
 }

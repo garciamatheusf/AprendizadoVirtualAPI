@@ -5,6 +5,8 @@ import controllers.DefaultStatusCodes;
 import models.entities.Usuario;
 import play.Logger;
 
+import java.util.ArrayList;
+
 public class UserResult extends DefaultResult {
     private final static Logger.ALogger appLogger = Logger.of("app");
 
@@ -37,7 +39,7 @@ public class UserResult extends DefaultResult {
 
     public static UserResult userFound(Usuario user) {
         UserResult userResult = new UserResult(200, "Operacao realizada com sucesso");
-        userResult.objectNode.pojoNode(user);
+        userResult.objectNode.putPOJO("usuario", user);
 
         return userResult;
     }
@@ -45,5 +47,12 @@ public class UserResult extends DefaultResult {
     public static UserResult bornDateInvalid() {
         UserResult user = new UserResult(401, "Data de nascimento invalida");
         return user;
+    }
+
+    public static UserResult sucess(ArrayList<Usuario> users) {
+        UserResult result = new UserResult(200, "Operacao realizada com sucesso");
+        result.objectNode.putPOJO("usuarios", users);
+
+        return result;
     }
 }

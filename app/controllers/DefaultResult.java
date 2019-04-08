@@ -50,11 +50,11 @@ public class DefaultResult {
         return asJson;
     }
 
-    public static DefaultResult resultForException(Marker reqIdMarker, Throwable e){
+    public static DefaultResult resultForException(Throwable e){
         DefaultResult defaultResult = new DefaultResult(DefaultStatusCodes.INTERNAL_SERVER_ERROR.getCode(),
                 e.getMessage());
 
-        appLogger.warn(reqIdMarker, "Retorno com erro padrao: {}", defaultResult.objectNode);
+        appLogger.warn("Retorno com erro padrao: {}", defaultResult.objectNode);
 
         return defaultResult;
     }
@@ -73,6 +73,14 @@ public class DefaultResult {
 
     public static DefaultResult forBadRequest(String motivo){
         return new DefaultResult(DefaultStatusCodes.BAD_REQUEST.getCode(), motivo);
+    }
+
+    public static DefaultResult requestWithoutToken(){
+        return new DefaultResult(DefaultStatusCodes.BAD_REQUEST.getCode(), "Necessario informar o token no cabecalho");
+    }
+
+    public static DefaultResult withoutPermission(){
+        return new DefaultResult(DefaultStatusCodes.FORBIDDEN.getCode(), DefaultStatusCodes.FORBIDDEN.getDescription());
     }
 
 }
