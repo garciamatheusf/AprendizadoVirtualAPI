@@ -79,8 +79,12 @@ public class DefaultResult {
         return new DefaultResult(DefaultStatusCodes.BAD_REQUEST.getCode(), "Necessario informar o token no cabecalho");
     }
 
+    public static DefaultResult invalidToken(){
+        return new DefaultResult(DefaultStatusCodes.FORBIDDEN.getCode(), "Token invalido");
+    }
+
     public static DefaultResult withoutPermission(){
-        return new DefaultResult(DefaultStatusCodes.FORBIDDEN.getCode(), DefaultStatusCodes.FORBIDDEN.getDescription());
+        return new DefaultResult(DefaultStatusCodes.UNAUTHORIZED.getCode(), DefaultStatusCodes.UNAUTHORIZED.getDescription());
     }
 
 }

@@ -9,20 +9,20 @@ import java.util.Date;
 
 @NamedQueries(value = {
         @NamedQuery(
-                name = Usuario.NAMED_QUERY_GET_BY_EMAIL,
-                query = "FROM Usuario u " +
+                name = User.NAMED_QUERY_GET_BY_EMAIL,
+                query = "FROM User u " +
                         " WHERE u.email = :email"
         ),
         @NamedQuery(
-                name = Usuario.NAMED_QUERY_GET_BY_TOKEN,
-                query = "FROM Usuario u " +
+                name = User.NAMED_QUERY_GET_BY_TOKEN,
+                query = "FROM User u " +
                         " WHERE u.token = :token"
         )
 })
 
 @Entity()
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-public class Usuario {
+public class User {
 
     public static final String NAMED_QUERY_GET_BY_EMAIL = "getUserByEmail";
     public static final String NAMED_QUERY_GET_BY_TOKEN = "getUserByToken";
@@ -32,42 +32,42 @@ public class Usuario {
     public String email;
 
     @Basic
-    @Column(name = "senha")
-    public String senha;
+    @Column(name = "password")
+    public String password;
 
     @Basic
     @Column(name = "token")
     public String token;
 
     @Basic
-    @Column(name = "nome")
-    public String nome;
+    @Column(name = "name")
+    public String name;
 
     @Basic
-    @Column(name = "sobrenome")
-    public String sobrenome;
+    @Column(name = "lastname")
+    public String lastname;
 
     @Basic
-    @Column(name = "dataNascimento")
-    public Date dataNasc;
+    @Column(name = "borndate")
+    public Date borndate;
 
     @Basic
-    @Column(name = "isAluno")
-    public boolean isAluno;
+    @Column(name = "student")
+    public boolean student;
 
 
-    public static ArrayList<Usuario> getAll(EntityManager em){
-        return (ArrayList<Usuario>) em.createQuery("SELECT u FROM Usuario u", Usuario.class).getResultList();
+    public static ArrayList<User> getAll(EntityManager em){
+        return (ArrayList<User>) em.createQuery("SELECT u FROM User u", User.class).getResultList();
     }
 
     @Transactional
-    public static void insertWithObject(EntityManager em, Usuario usuario){
-        em.persist(usuario);
+    public static void insertWithObject(EntityManager em, User user){
+        em.persist(user);
     }
 
-    public static Usuario getByEmail(EntityManager em, String email){
+    public static User getByEmail(EntityManager em, String email){
         try {
-            return (Usuario) em.createNamedQuery(Usuario.NAMED_QUERY_GET_BY_EMAIL)
+            return (User) em.createNamedQuery(User.NAMED_QUERY_GET_BY_EMAIL)
                     .setParameter("email", email)
                     .getSingleResult();
 
@@ -76,9 +76,9 @@ public class Usuario {
         }
     }
 
-    public static Usuario getByToken(EntityManager em, String token){
+    public static User getByToken(EntityManager em, String token){
         try {
-            return (Usuario) em.createNamedQuery(Usuario.NAMED_QUERY_GET_BY_TOKEN)
+            return (User) em.createNamedQuery(User.NAMED_QUERY_GET_BY_TOKEN)
                     .setParameter("token", token)
                     .getSingleResult();
 
@@ -87,18 +87,18 @@ public class Usuario {
         }
     }
 
-    public static boolean update(EntityManager em, Usuario usuario){
+    public static boolean update(EntityManager em, User user){
         try{
-            em.merge(usuario);
+            em.merge(user);
             return true;
         }catch(Exception e){
             return false;
         }
     }
 
-    public static boolean remove(EntityManager em, Usuario usuario){
+    public static boolean remove(EntityManager em, User user){
         try{
-            Object u = em.merge(usuario);
+            Object u = em.merge(user);
             em.remove(u);
             return true;
         }catch(Exception e){

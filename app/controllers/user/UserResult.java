@@ -2,7 +2,7 @@ package controllers.user;
 
 import controllers.DefaultResult;
 import controllers.DefaultStatusCodes;
-import models.entities.Usuario;
+import models.entities.User;
 import play.Logger;
 
 import java.util.ArrayList;
@@ -37,9 +37,9 @@ public class UserResult extends DefaultResult {
         return user;
     }
 
-    public static UserResult userFound(Usuario user) {
+    public static UserResult userFound(User user) {
         UserResult userResult = new UserResult(200, "Operacao realizada com sucesso");
-        userResult.objectNode.putPOJO("usuario", user);
+        userResult.objectNode.putPOJO("user", user);
 
         return userResult;
     }
@@ -49,9 +49,9 @@ public class UserResult extends DefaultResult {
         return user;
     }
 
-    public static UserResult sucess(ArrayList<Usuario> users) {
+    public static UserResult sucess(ArrayList<User> users) {
         UserResult result = new UserResult(200, "Operacao realizada com sucesso");
-        result.objectNode.putPOJO("usuarios", users);
+        result.objectNode.putPOJO("users", users);
 
         return result;
     }

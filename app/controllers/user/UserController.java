@@ -3,7 +3,7 @@ package controllers.user;
 import com.fasterxml.jackson.databind.JsonNode;
 import controllers.DefaultResult;
 import controllers.ReqIdAction;
-import models.entities.Usuario;
+import models.entities.User;
 import net.logstash.logback.encoder.org.apache.commons.lang.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Marker;
@@ -12,6 +12,7 @@ import play.db.jpa.JPAApi;
 import play.libs.concurrent.HttpExecutionContext;
 import play.mvc.Controller;
 import play.mvc.Result;
+import services.EmailSender;
 import util.Formatter;
 import util.JsonValidation;
 
@@ -35,7 +36,7 @@ public class UserController extends Controller {
                 //RESTRINGIR ESTE MÉTODO
                 appLogger.info("Listagem de todos usuarios solicitada.");
 
-                ArrayList<Usuario> users = jpaApi.withTransaction(Usuario::getAll);
+                ArrayList<User> users = jpaApi.withTransaction(User::getAll);
                 return ok(UserResult.sucess(users).asJson());
             }catch(Exception e){
                 return internalServerError(DefaultResult.resultForException(e).asJson());
@@ -52,12 +53,12 @@ public class UserController extends Controller {
                     return badRequest(DefaultResult.forBadRequest("Email nao informado").asJson());
                 }
 
-                Usuario user = jpaApi.withTransaction(em -> Usuario.getByEmail(em, email));
+                User user = jpaApi.withTransaction(em -> User.getByEmail(em, email));
 
                 if (user == null) {
                     return notFound(UserResult.userNotFound().asJson());
                 }
-                user.senha = null;
+                user.password = null;
 
                 return ok(UserResult.userFound(user).asJson());
             }catch(Exception e){
@@ -75,12 +76,12 @@ public class UserController extends Controller {
                     return badRequest(DefaultResult.forBadRequest("Token nao informado").asJson());
                 }
 
-                Usuario user = jpaApi.withTransaction(em -> Usuario.getByToken(em, token));
+                User user = jpaApi.withTransaction(em -> User.getByToken(em, token));
 
                 if (user == null) {
                     return notFound(UserResult.userNotFound().asJson());
                 }
-                user.senha = null;
+                user.password = null;
 
                 return ok(UserResult.userFound(user).asJson());
             }catch(Exception e){
@@ -97,33 +98,33 @@ public class UserController extends Controller {
                 appLogger.info("Cadastro solicitado. Informacoes recebidas {}", bodyNode);
 
                 try {
-                    JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "senha", "nome", "sobrenome", "dataNascimento", "isAluno");
+                    JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "password", "name", "lastname", "borndate", "student");
                 } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
                     return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
                 }
 
-                if (jpaApi.withTransaction(em -> Usuario.getByEmail(em, bodyNode.get("email").asText())) != null) {
+                if (jpaApi.withTransaction(em -> User.getByEmail(em, bodyNode.get("email").asText())) != null) {
                     return forbidden(UserResult.mailAlreadyRegistered().asJson(reqIdMarker, true));
                 }
 
-                Usuario user = new Usuario();
+                User user = new User();
                 try {
-                    user.dataNasc = Formatter.stringToDate(bodyNode.get("dataNascimento").asText());
+                    user.borndate = Formatter.stringToDate(bodyNode.get("borndate").asText());
                 } catch (ParseException e) {
                     appLogger.error("Erro na conversao da data de nascimento");
                     return badRequest(UserResult.bornDateInvalid().asJson());
                 }
                 user.email = bodyNode.get("email").asText();
-                user.senha = DigestUtils.sha1Hex(bodyNode.get("senha").asText());
-                user.nome = bodyNode.get("nome").asText();
-                user.sobrenome = bodyNode.get("sobrenome").asText();
+                user.password = DigestUtils.sha1Hex(bodyNode.get("password").asText());
+                user.name = bodyNode.get("name").asText();
+                user.lastname = bodyNode.get("lastname").asText();
 
-                user.isAluno = bodyNode.get("isAluno").asBoolean();
+                user.student = bodyNode.get("student").asBoolean();
 
-                jpaApi.withTransaction(() -> Usuario.insertWithObject(jpaApi.em(), user));
-                /*
-                ENVIA E-MAIL DE BOAS VINDAS
-                 */
+                jpaApi.withTransaction(() -> User.insertWithObject(jpaApi.em(), user));
+
+                EmailSender.welcomeEmail(user.email);
+
                 return ok(UserResult.sucess().asJson());
             }catch(Exception e){
                 return internalServerError(DefaultResult.resultForException(e).asJson());
@@ -149,19 +150,22 @@ public class UserController extends Controller {
                     return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
                 }
 
-                Usuario solicitante = jpaApi.withTransaction(em -> Usuario.getByToken(em, token));
-                if (!solicitante.email.equals(bodyNode.get("email").asText())) {
+                User requester = jpaApi.withTransaction(em -> User.getByToken(em, token));
+                if(requester == null){
+                    return forbidden(DefaultResult.invalidToken().asJson());
+                }
+                if (!requester.email.equals(bodyNode.get("email").asText())) {
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 
                 try {
-                    updateInfos(bodyNode, solicitante);
+                    updateInfos(bodyNode, requester);
                 } catch (ParseException ex) {
                     appLogger.error("Erro na conversao da data de nascimento");
                     return badRequest(UserResult.bornDateInvalid().asJson());
                 }
 
-                jpaApi.withTransaction(em -> Usuario.update(em, solicitante));
+                jpaApi.withTransaction(em -> User.update(em, requester));
 
                 return ok(UserResult.sucess().asJson());
             }catch(Exception e){
@@ -170,21 +174,21 @@ public class UserController extends Controller {
         }, ec.current());
     }
 
-    private void updateInfos(JsonNode bodyNode, Usuario solicitante) throws ParseException {
-        if(bodyNode.has("nome")){
-            solicitante.nome = bodyNode.get("nome").asText();
+    private void updateInfos(JsonNode bodyNode, User solicitante) throws ParseException {
+        if(bodyNode.has("name")){
+            solicitante.name = bodyNode.get("name").asText();
         }
-        if(bodyNode.has("sobrenome")){
-            solicitante.sobrenome = bodyNode.get("sobrenome").asText();
+        if(bodyNode.has("lastname")){
+            solicitante.lastname = bodyNode.get("lastname").asText();
         }
-        if(bodyNode.has("senha")){
-            solicitante.senha = DigestUtils.sha1Hex(bodyNode.get("senha").asText());
+        if(bodyNode.has("password")){
+            solicitante.password = DigestUtils.sha1Hex(bodyNode.get("password").asText());
         }
-        if(bodyNode.has("isAluno")){
-            solicitante.isAluno = bodyNode.get("isAluno").asBoolean();
+        if(bodyNode.has("student")){
+            solicitante.student = bodyNode.get("student").asBoolean();
         }
-        if(bodyNode.has("dataNascimento")){
-            solicitante.dataNasc = Formatter.stringToDate(bodyNode.get("dataNascimento").asText());
+        if(bodyNode.has("borndate")){
+            solicitante.borndate = Formatter.stringToDate(bodyNode.get("borndate").asText());
         }
     }
 
@@ -206,12 +210,15 @@ public class UserController extends Controller {
                     return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
                 }
 
-                Usuario solicitante = jpaApi.withTransaction(em -> Usuario.getByToken(em, token));
-                if (!solicitante.email.equals(bodyNode.get("email").asText())) {
+                User requester = jpaApi.withTransaction(em -> User.getByToken(em, token));
+                if(requester == null){
+                    return forbidden(DefaultResult.invalidToken().asJson());
+                }
+                if (!requester.email.equals(bodyNode.get("email").asText())) {
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 
-                jpaApi.withTransaction(em -> Usuario.remove(em, solicitante));
+                jpaApi.withTransaction(em -> User.remove(em, requester));
 
                 return ok(UserResult.sucess().asJson());
             }catch(Exception e){

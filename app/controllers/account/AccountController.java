@@ -3,7 +3,7 @@ package controllers.account;
 import com.fasterxml.jackson.databind.JsonNode;
 import controllers.DefaultResult;
 import controllers.ReqIdAction;
-import models.entities.Usuario;
+import models.entities.User;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Marker;
 import play.Logger;
@@ -32,26 +32,26 @@ public class AccountController extends Controller {
             appLogger.info("Login solicitado. Informacoes recebidas {}", bodyNode);
 
             try {
-                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "senha");
+                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "password");
             } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
                 return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
             }
 
             String email = bodyNode.get("email").asText();
-            String senha = bodyNode.get("senha").asText();
+            String password = bodyNode.get("password").asText();
 
-            Usuario usuario = jpaApi.withTransaction(em -> Usuario.getByEmail(em, email));
-            if(usuario == null){
+            User user = jpaApi.withTransaction(em -> User.getByEmail(em, email));
+            if(user == null){
                 return unauthorized(AccountResult.accountNotFound().asJson(reqIdMarker, true));
             }
 
-            if(!usuario.senha.equals(DigestUtils.sha1Hex(senha))){
+            if(!user.password.equals(DigestUtils.sha1Hex(password))){
                 return unauthorized(AccountResult.wrongPassword().asJson(reqIdMarker, true));
             }
 
             String token = DigestUtils.sha1Hex(email + "cl45SR0oM" + new Date());
-            usuario.token = token;
-            jpaApi.withTransaction(em -> Usuario.update(em, usuario));
+            user.token = token;
+            jpaApi.withTransaction(em -> User.update(em, user));
 
             return ok(AccountResult.sucessLogin(token).asJson());
         }, ec.current());
@@ -64,7 +64,7 @@ public class AccountController extends Controller {
             appLogger.info("Resetar senha solicitado. Informacoes recebidas {}", bodyNode);
 
             try {
-                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "senhaTemp", "novaSenha");
+                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "temppassword", "newpassword");
             } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
                 return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
             }
