@@ -8,7 +8,7 @@ import java.util.Date;
 
 @NamedQueries(value = {
         @NamedQuery(
-                name = Lesson.NAMED_QUERY_GET_BY_ID,
+                name = Question.NAMED_QUERY_GET_BY_ID,
                 query = "FROM Question l " +
                         " WHERE l.id = :id"
         )
@@ -27,9 +27,9 @@ public class Question {
     @Column(name = "question")
     public byte[] question;
 
-    @ManyToOne
-    @JoinColumn(name = "author")
-    public User author;
+    @Basic
+    @Column(name = "author")
+    public String author;
 
     @Lob
     @Column(name = "answer")
@@ -39,15 +39,15 @@ public class Question {
     @Column(name = "date")
     public Date date;
 
-    @ManyToOne
-    @JoinColumn(name = "idlesson")
-    public Lesson idlesson;
+    @Basic
+    @Column(name = "idlesson")
+    public int idlesson;
 
     public static ArrayList<Question> getAll(EntityManager em){
         return (ArrayList<Question>) em.createQuery("SELECT l FROM Question l", Question.class).getResultList();
     }
 
-    public static Question getById(EntityManager em, int id){
+    public static Question getById(EntityManager em, long id){
         try {
             return (Question) em.createNamedQuery(Question.NAMED_QUERY_GET_BY_ID)
                     .setParameter("id", id)

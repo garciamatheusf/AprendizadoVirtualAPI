@@ -39,9 +39,9 @@ public class QuestionResult extends DefaultResult {
         return questionResult;
     }
 
-    public static QuestionResult sucess(ArrayList<Question> lessons) {
+    public static QuestionResult sucess(ArrayList<Question> questions) {
         QuestionResult result = new QuestionResult(200, "Operacao realizada com sucesso");
-        result.objectNode.putPOJO("questions", lessons);
+        result.objectNode.putPOJO("questions", questions);
 
         return result;
     }

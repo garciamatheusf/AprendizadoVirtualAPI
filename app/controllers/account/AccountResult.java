@@ -35,6 +35,11 @@ public class AccountResult extends DefaultResult {
         return issueNFeResult;
     }
 
+    public static AccountResult wrongTempPassword() {
+        AccountResult issueNFeResult = new AccountResult(401, "Senha temporária inválido");
+        return issueNFeResult;
+    }
+
     public static AccountResult solicitationNotFound() {
         AccountResult issueNFeResult = new AccountResult(401, "Nao existe solicitao de reset para este e-mail");
         return issueNFeResult;

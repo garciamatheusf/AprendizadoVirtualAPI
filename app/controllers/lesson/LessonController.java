@@ -33,6 +33,7 @@ public class LessonController extends Controller {
                 appLogger.info("Listagem de todas as aulas solicitada.");
 
                 ArrayList<Lesson> lessons = jpaApi.withTransaction(Lesson::getAll);
+
                 return ok(LessonResult.sucess(lessons).asJson());
             }catch(Exception e){
                 return internalServerError(DefaultResult.resultForException(e).asJson());
@@ -41,7 +42,7 @@ public class LessonController extends Controller {
         }, ec.current());
     }
 
-    public CompletionStage<Result> getLesson(Integer id){
+    public CompletionStage<Result> getLesson(long id){
         return CompletableFuture.supplyAsync(() -> {
             try {
                 appLogger.info("Informacoes de aula solicitada. Informacoes recebidas {}", id);
@@ -112,9 +113,8 @@ public class LessonController extends Controller {
                 Lesson lesson = new Lesson();
                 updateInfos(bodyNode, lesson);
                 lesson.date = new Date();
-                lesson.author = user;
+                lesson.author = user.email;
                 lesson.views = 0;
-
 
                 jpaApi.withTransaction(() -> Lesson.insertWithObject(jpaApi.em(), lesson));
 
@@ -151,7 +151,7 @@ public class LessonController extends Controller {
                 if(lesson == null){
                     return notFound(LessonResult.lessonNotFound().asJson());
                 }
-                if (!requester.email.equals(lesson.author.email)) {
+                if (!requester.email.equals(lesson.author)) {
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 
@@ -213,7 +213,7 @@ public class LessonController extends Controller {
                 if(lesson == null){
                     return notFound(LessonResult.lessonNotFound().asJson());
                 }
-                if (!requester.email.equals(lesson.author.email)){
+                if (!requester.email.equals(lesson.author)){
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 

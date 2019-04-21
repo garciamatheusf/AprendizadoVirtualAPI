@@ -11,7 +11,7 @@ import java.util.Date;
         @NamedQuery(
                 name = Lesson.NAMED_QUERY_GET_BY_ID,
                 query = "FROM Lesson l " +
-                        " WHERE l.id = :id"
+                        " WHERE l.id = :idlesson"
         )
 })
 
@@ -40,9 +40,9 @@ public class Lesson {
     @Column(name = "description")
     public String description;
 
-    @ManyToOne
-    @JoinColumn(name = "author")
-    public User author;
+    @Basic
+    @Column(name = "author")
+    public String author;
 
     @Basic
     @Column(name = "live")
@@ -61,10 +61,10 @@ public class Lesson {
         return (ArrayList<Lesson>) em.createQuery("SELECT l FROM Lesson l", Lesson.class).getResultList();
     }
 
-    public static Lesson getById(EntityManager em, int id){
+    public static Lesson getById(EntityManager em, long id){
         try {
             return (Lesson) em.createNamedQuery(Lesson.NAMED_QUERY_GET_BY_ID)
-                    .setParameter("id", id)
+                    .setParameter("idlesson", id)
                     .getSingleResult();
 
         } catch (NoResultException e){
@@ -73,7 +73,9 @@ public class Lesson {
     }
 
     public static ArrayList<Lesson> getLastTen(EntityManager em){
-        return (ArrayList<Lesson>) em.createQuery("SELECT l from Lesson l order by date desc").setMaxResults(10);
+        return (ArrayList<Lesson>) em.createQuery("SELECT l from Lesson l order by date desc")
+                .setMaxResults(10)
+                .getResultList();
     }
 
     @Transactional

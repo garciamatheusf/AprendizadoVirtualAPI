@@ -10,14 +10,14 @@ PUT         /user/                          controllers.user.UserController.upda
 DELETE      /user/                          controllers.user.UserController.deleteUser
 # Lesson
 GET         /lesson/                        controllers.lesson.LessonController.listAll
-GET         /lesson/:id                     controllers.lesson.LessonController.getLesson(id: Integer)
+GET         /lesson/:id                     controllers.lesson.LessonController.getLesson(id: Long)
 GET         /lesson/lastten/                controllers.lesson.LessonController.getLastTen
 POST        /lesson/                        controllers.lesson.LessonController.createLesson
 PUT         /lesson/                        controllers.lesson.LessonController.updateLesson
 DELETE      /lesson/                        controllers.lesson.LessonController.deleteLesson
 # Question
 GET         /question/                      controllers.question.QuestionController.listAll
-GET         /question/:id                   controllers.question.QuestionController.getQuestion(id: Integer)
+GET         /question/:id                   controllers.question.QuestionController.getQuestion(id: Long)
 POST        /question/                      controllers.question.QuestionController.createQuestion
 PUT         /question/                      controllers.question.QuestionController.updateQuestion
 DELETE      /question/                      controllers.question.QuestionController.deleteQuestion

@@ -37,6 +37,7 @@ public class UserController extends Controller {
                 appLogger.info("Listagem de todos usuarios solicitada.");
 
                 ArrayList<User> users = jpaApi.withTransaction(User::getAll);
+                users.forEach(u -> u.token = null);
                 return ok(UserResult.sucess(users).asJson());
             }catch(Exception e){
                 return internalServerError(DefaultResult.resultForException(e).asJson());
@@ -59,6 +60,7 @@ public class UserController extends Controller {
                     return notFound(UserResult.userNotFound().asJson());
                 }
                 user.password = null;
+                user.token = null;
 
                 return ok(UserResult.userFound(user).asJson());
             }catch(Exception e){
@@ -82,6 +84,7 @@ public class UserController extends Controller {
                     return notFound(UserResult.userNotFound().asJson());
                 }
                 user.password = null;
+                user.token = null;
 
                 return ok(UserResult.userFound(user).asJson());
             }catch(Exception e){

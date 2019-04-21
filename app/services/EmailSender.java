@@ -18,7 +18,7 @@ public class EmailSender {
     public static void welcomeEmail(String receiver){
         appLogger.info("Montando e-mail de boas vindas");
         String title = "Bem vindx - Sala de Aula Virtual";
-        String body = "Bem vindx à Sala de Aula Virtual!\\nEsperamos que você aprenda bastante e que este desejo pelo novo nunca cesse!!\\nAproveite.";
+        String body = "Bem vindx à Sala de Aula Virtual!\nEsperamos que você aprenda bastante e que este desejo pelo novo nunca cesse!!\nAproveite.";
 
         send(receiver, title, body);
     }
@@ -32,23 +32,20 @@ public class EmailSender {
     }
 
     private static void send(String receiver, String title, String body){
-        Properties props = new Properties();
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.socketFactory.port", "587");
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.port", "587");
-
-        Session session = Session.getDefaultInstance(props,
-                new javax.mail.Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication()
-                    {
-                        return new PasswordAuthentication("saladeaulavr@gmail.com", "SalaDeAula123");
-                    }
-                });
-        session.setDebug(true);
-
         try {
+            Properties props = new Properties();
+            props.put("mail.smtp.host", "smtp.gmail.com");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.port", "587");
+
+            Session session = Session.getDefaultInstance(props, new javax.mail.Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication()
+                {
+                    return new PasswordAuthentication("saladeaulavr@gmail.com", "SalaDeAula123");
+                }
+            });
+            session.setDebug(false);
 
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress("saladeaulavr@gmail.com"));
@@ -64,7 +61,9 @@ public class EmailSender {
             appLogger.info("E-mail enviado");
 
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            appLogger.error(e.getStackTrace().toString());
+        } catch (Exception e){
+            appLogger.error(e.getStackTrace().toString());
         }
     }
 }

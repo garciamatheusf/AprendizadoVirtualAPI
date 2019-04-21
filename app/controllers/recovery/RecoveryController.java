@@ -44,42 +44,33 @@ public class RecoveryController extends Controller {
 
     public CompletionStage<Result> createRecovery(){
         return CompletableFuture.supplyAsync(() -> {
-            if (!request().getHeaders().contains("token")) {
-                return badRequest(DefaultResult.requestWithoutToken().asJson());
-            }
-            Marker reqIdMarker = ReqIdAction.getReqIdFromContext(ctx());
-            JsonNode bodyNode = request().body().asJson();
-            String token = request().getHeaders().get("token").get();
-            appLogger.info("Pedido de recuperacao de senha solicitado. Informacoes recebidas {} - {}", token, bodyNode);
-
             try {
-                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email");
-            } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
-                return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
+                Marker reqIdMarker = ReqIdAction.getReqIdFromContext(ctx());
+                JsonNode bodyNode = request().body().asJson();
+                appLogger.info("Pedido de recuperacao de senha solicitado. Informacoes recebidas {}" , bodyNode);
+
+                try {
+                    JsonValidation.validateRequiredFieldsFilled(bodyNode, "email");
+                } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
+                    return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
+                }
+
+                RecoveryPassword recoveryPassword = new RecoveryPassword();
+                recoveryPassword.email = bodyNode.get("email").asText();
+                recoveryPassword.temppassword = createTempPassword();
+
+                if(jpaApi.withTransaction(em-> RecoveryPassword.getByEmail(em, recoveryPassword.email)) != null){
+                    return forbidden(RecoveryResult.recoveryAlreadySolicited().asJson());
+                }
+
+                jpaApi.withTransaction(() -> RecoveryPassword.insertWithObject(jpaApi.em(), recoveryPassword));
+
+                EmailSender.recoveryEmail(recoveryPassword.email, recoveryPassword.temppassword);
+
+                return ok(RecoveryResult.sucess().asJson());
+            }catch(Exception e){
+                return internalServerError(DefaultResult.resultForException(e).asJson());
             }
-
-            User requester = jpaApi.withTransaction(em -> User.getByToken(em, token));
-            if(requester == null){
-                return forbidden(DefaultResult.invalidToken().asJson());
-            }
-            if(!requester.email.equals(bodyNode.get("email").asText())){
-                return unauthorized(DefaultResult.withoutPermission().asJson());
-            }
-
-            RecoveryPassword recoveryPassword = new RecoveryPassword();
-            recoveryPassword.email = bodyNode.get("email").asText();
-            recoveryPassword.temppassword = createTempPassword();
-
-            if(jpaApi.withTransaction(em-> RecoveryPassword.getByEmail(em, recoveryPassword.email)) != null){
-                return forbidden(RecoveryResult.recoveryAlreadySolicited().asJson());
-            }
-
-            jpaApi.withTransaction(() -> RecoveryPassword.insertWithObject(jpaApi.em(), recoveryPassword));
-
-            EmailSender.recoveryEmail(recoveryPassword.email, recoveryPassword.temppassword);
-
-            return ok(RecoveryResult.sucess().asJson());
-
         }, ec.current());
     }
 
@@ -90,39 +81,40 @@ public class RecoveryController extends Controller {
 
     public CompletionStage<Result> deleteRecovery(){
         return CompletableFuture.supplyAsync(() -> {
-            if (!request().getHeaders().contains("token")) {
-                return badRequest(DefaultResult.requestWithoutToken().asJson());
+            try{
+                if (!request().getHeaders().contains("token")) {
+                    return badRequest(DefaultResult.requestWithoutToken().asJson());
+                }
+                Marker reqIdMarker = ReqIdAction.getReqIdFromContext(ctx());
+                JsonNode bodyNode = request().body().asJson();
+                String token = request().getHeaders().get("token").get();
+                appLogger.info("Delete de recuperacao de senha solicitado. Informacoes recebidas {} - {}", token, bodyNode);
+
+                try {
+                    JsonValidation.validateRequiredFieldsFilled(bodyNode, "email");
+                } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
+                    return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
+                }
+
+                User requester = jpaApi.withTransaction(em -> User.getByToken(em, token));
+                if(requester == null){
+                    return forbidden(DefaultResult.invalidToken().asJson());
+                }
+                if(!requester.email.equals(bodyNode.get("email").asText())){
+                    return unauthorized(DefaultResult.withoutPermission().asJson());
+                }
+
+                RecoveryPassword recoveryPassword = jpaApi.withTransaction(em -> RecoveryPassword.getByEmail(em, bodyNode.get("email").asText()));
+                if(recoveryPassword == null){
+                    return notFound(RecoveryResult.recoveryNotFound().asJson());
+                }
+
+                jpaApi.withTransaction(em -> RecoveryPassword.remove(em, recoveryPassword));
+
+                return ok(RecoveryResult.sucess().asJson());
+            }catch(Exception e){
+                return internalServerError(DefaultResult.resultForException(e).asJson());
             }
-            Marker reqIdMarker = ReqIdAction.getReqIdFromContext(ctx());
-            JsonNode bodyNode = request().body().asJson();
-            String token = request().getHeaders().get("token").get();
-            appLogger.info("Delete de recuperacao de senha solicitado. Informacoes recebidas {} - {}", token, bodyNode);
-
-            try {
-                JsonValidation.validateRequiredFieldsFilled(bodyNode, "email", "temppassword", "newpassword");
-            } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
-                return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
-            }
-
-            User requester = jpaApi.withTransaction(em -> User.getByToken(em, token));
-            if(requester == null){
-                return forbidden(DefaultResult.invalidToken().asJson());
-            }
-            if(!requester.email.equals(bodyNode.get("email").asText())){
-                return unauthorized(DefaultResult.withoutPermission().asJson());
-            }
-
-            RecoveryPassword recoveryPassword = jpaApi.withTransaction(em -> RecoveryPassword.getByEmail(em, bodyNode.get("email").asText()));
-            if(recoveryPassword == null){
-                return notFound(RecoveryResult.recoveryNotFound().asJson());
-            }
-
-            requester.password = DigestUtils.sha1Hex(bodyNode.get("newpassword").asText());
-            jpaApi.withTransaction(em -> User.update(em, requester));
-            jpaApi.withTransaction(em -> RecoveryPassword.remove(em, recoveryPassword));
-
-            return ok(RecoveryResult.sucess().asJson());
-
         }, ec.current());
     }
 }

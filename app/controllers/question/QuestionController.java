@@ -40,7 +40,7 @@ public class QuestionController extends Controller {
         }, ec.current());
     }
 
-    public CompletionStage<Result> getQuestion(Integer id){
+    public CompletionStage<Result> getQuestion(Long id){
         return CompletableFuture.supplyAsync(() -> {
             try {
                 appLogger.info("Informacoes de pergunta solicitada. Informacoes recebidas {}", id);
@@ -65,8 +65,42 @@ public class QuestionController extends Controller {
 
     public CompletionStage<Result> createQuestion(){
         return CompletableFuture.supplyAsync(() -> {
-            return ok(QuestionResult.sucess().asJson());
+            try {
+                if (!request().getHeaders().contains("token")) {
+                    return badRequest(DefaultResult.requestWithoutToken().asJson());
+                }
+                Marker reqIdMarker = ReqIdAction.getReqIdFromContext(ctx());
+                JsonNode bodyNode = request().body().asJson();
 
+                String token = request().getHeaders().get("token").get();
+                appLogger.info("Cadastro de pergunta solicitado. Informacoes recebidas {} - {}", token, bodyNode);
+
+                try {
+                    JsonValidation.validateRequiredFieldsFilled(bodyNode, "question", "author", "idlesson");
+                } catch (JsonValidation.RequiredJsonFieldsNotFilledException e) {
+                    return badRequest(DefaultResult.forRequiredInfoNotFilled(e).asJson(reqIdMarker, true));
+                }
+
+                User user = jpaApi.withTransaction(em -> User.getByToken(em, token));
+                if(user == null){
+                    return forbidden(DefaultResult.invalidToken().asJson());
+                }
+
+                if(!user.email.equals(bodyNode.get("author").asText())){
+                    return forbidden(DefaultResult.withoutPermission().asJson());
+                }
+
+                Question question = new Question();
+                question.question = bodyNode.get("question").binaryValue();
+                question.author = bodyNode.get("author").asText();
+                question.idlesson = bodyNode.get("idlesson").asInt();
+
+                jpaApi.withTransaction(() -> Question.insertWithObject(jpaApi.em(), question));
+
+                return ok(QuestionResult.sucess().asJson());
+            }catch(Exception e){
+                return internalServerError(DefaultResult.resultForException(e).asJson());
+            }
         }, ec.current());
     }
 
@@ -96,11 +130,13 @@ public class QuestionController extends Controller {
                 if(question == null){
                     return notFound(QuestionResult.questionNotFound().asJson());
                 }
-                if (!requester.email.equals(question.author.email)) {
+                if (!requester.email.equals(question.author)) {
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 
-                updateInfos(bodyNode, question);
+                if(bodyNode.has("question")){
+                    question.question = bodyNode.get("question").binaryValue();
+                }
 
                 jpaApi.withTransaction(em -> Question.update(em, question));
 
@@ -110,15 +146,6 @@ public class QuestionController extends Controller {
             }
 
         }, ec.current());
-    }
-
-    private void updateInfos(JsonNode bodyNode, Question question) {
-        if(bodyNode.has("question")){
-            question.question = bodyNode.get("question").asText().getBytes();
-        }
-        if(bodyNode.has("answer")){
-            question.answer = bodyNode.get("answer").asText().getBytes();
-        }
     }
 
     public CompletionStage<Result> deleteQuestion(){
@@ -147,7 +174,7 @@ public class QuestionController extends Controller {
                 if(question == null){
                     return notFound(QuestionResult.questionNotFound().asJson());
                 }
-                if (!requester.email.equals(question.author.email)){
+                if (!requester.email.equals(question.author)){
                     return forbidden(DefaultResult.withoutPermission().asJson());
                 }
 
