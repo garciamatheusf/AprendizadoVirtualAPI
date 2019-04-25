@@ -18,6 +18,7 @@ import util.JsonValidation;
 
 import javax.inject.Inject;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -124,6 +125,10 @@ public class UserController extends Controller {
 
                 user.student = bodyNode.get("student").asBoolean();
 
+                if(bodyNode.has("photo")){
+                    user.photo = bodyNode.get("photo").asText();
+                }
+
                 jpaApi.withTransaction(() -> User.insertWithObject(jpaApi.em(), user));
 
                 EmailSender.welcomeEmail(user.email);
@@ -192,6 +197,9 @@ public class UserController extends Controller {
         }
         if(bodyNode.has("borndate")){
             solicitante.borndate = Formatter.stringToDate(bodyNode.get("borndate").asText());
+        }
+        if(bodyNode.has("photo")){
+            solicitante.photo = bodyNode.get("photo").asText();
         }
     }
 

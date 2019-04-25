@@ -55,6 +55,10 @@ public class User {
     @Column(name = "student")
     public boolean student;
 
+    @Basic
+    @Column(name = "photo")
+    public String photo;
+
 
     public static ArrayList<User> getAll(EntityManager em){
         return (ArrayList<User>) em.createQuery("SELECT u FROM User u", User.class).getResultList();
